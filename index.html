@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地点配置課題</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+      color: #111827;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .sidebar {
+      width: 310px;
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: 90vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    .spot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .spot-item {
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      cursor: pointer;
+      background: #fafafa;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .spot-item:hover {
+      background: #f0f7ff;
+      transform: translateY(-1px);
+    }
+
+    .spot-item.used {
+      background: #dbeafe;
+      border-color: #2563eb;
+      opacity: 0.65;
+      position: relative;
+    }
+
+    .spot-item.used::after {
+      content: "配置済み";
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: #2563eb;
+      color: white;
+      font-size: 12px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .spot-item img {
+      width: 100%;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .right-area {
+      flex: 1;
+    }
+
+    .canvas {
+      width: min(90vw, 1200px);
+      aspect-ratio: 1 / 1;
+      background: #ffffff;
+      border: 3px dashed #2563eb;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .unknown-box {
+      width: min(90vw, 1200px);
+      min-height: 150px;
+      margin-top: 20px;
+      border: 3px dashed #a855f7;
+      border-radius: 20px;
+      background: #ffffff;
+      padding: 16px;
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-content: flex-start;
+    }
+
+    .unknown-title {
+      width: 100%;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #6b21a8;
+    }
+
+    .placed-spot {
+      position: absolute;
+      text-align: center;
+      cursor: move;
+      user-select: none;
+      z-index: 10;
+      width: 135px;
+    }
+
+    .placed-spot img {
+      width: 135px;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      background: white;
+      pointer-events: none;
+    }
+
+    .respondent-box {
+      background: white;
+      padding: 16px 20px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .respondent-box input {
+      font-size: 18px;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      min-width: 220px;
+    }
+
+    .respondent-box p {
+      margin: 0;
+      color: #6b7280;
+      width: 100%;
+    }
+
+    .guide {
+      background:white;
+      padding:20px;
+      border-radius:16px;
+      margin-bottom:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      line-height:1.8;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding:12px 20px;
+      border:none;
+      border-radius:12px;
+      color:white;
+      font-size:16px;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .save-button {
+      background:#16a34a;
+    }
+
+    .reset-button {
+      background:#6b7280;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>地点配置課題</h1>
+
+  <div class="respondent-box">
+    <label for="respondentId"><strong>回答者ID</strong></label>
+    <input id="respondentId" type="text" placeholder="例：A001" autocomplete="off">
+    <p>指定された回答者IDを入力してください。</p>
+  </div>
+
+  <div class="guide">
+    <h2>［実施内容］</h2>
+    <ul>
+      <li>あなたがイメージする長崎市のスポットを右の枠内に配置してください。</li>
+      <li>左に並んでいるアイコンはスポットを示しています。クリックして枠の中にアイコンを表示させて，ドラッグして配置してください。</li>
+      <li>時間内であれば，何度修正しても（配置し直しても）構いません。</li>
+      <li>あなたが知らないスポットは，枠の下にある「わからないスポット」へ移動してください。</li>
+      <li>回答が終了したら，「配置結果を保存」を押してください。</li>
+    </ul>
+
+    <h2>［注意事項］</h2>
+    <ul>
+      <li>スマホや地図帳はいっさい見ずに，あなたのイメージをそのまま表現してください。</li>
+      <li>周囲の人と相談せずに，一人で実施してください。</li>
+      <li>正解や不正解はありませんので，不完全であっても（誤りがあっても）構いません。</li>
+      <li>頭に浮かんだ内容はすべて，なるべく詳しく表現してください。</li>
+    </ul>
+  </div>
+
+  <div class="button-row">
+    <button class="save-button" onclick="saveAsImage()">配置結果を保存</button>
+    
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <h2>スポット一覧</h2>
+      <div id="spotList" class="spot-grid"></div>
+    </div>
+
+    <div class="right-area">
+      <div class="canvas" id="canvas"></div>
+
+      <div class="unknown-box" id="unknownBox">
+        <div class="unknown-title">わからないスポット</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAjsAkshBiTYBECWbKguZ197sk9YvrRWpM",
+      authDomain: "chitenhaichi.firebaseapp.com",
+      projectId: "chitenhaichi",
+      storageBucket: "chitenhaichi.firebasestorage.app",
+      messagingSenderId: "321429542044",
+      appId: "1:321429542044:web:b63ffb614cd29aa3dfc959",
+      measurementId: "G-883W373JTM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    // Firestoreのみを使用します。PNGはimageBase64として保存されます。
+
+    const spots = [
+      { name: '長崎駅', image: 'images/nagasaki_station.png' },
+      { name: '新地中華街', image: 'images/shinchi_chinatown.png' },
+      { name: '出島', image: 'images/dejima.png' },
+      { name: 'グラバー園', image: 'images/glover_garden.png' },
+      { name: 'オランダ坂', image: 'images/oranda_slope.png' },
+      { name: '眼鏡橋', image: 'images/megane_bridge.png' },
+      { name: '孔子廟', image: 'images/koshi_byo.png' },
+      { name: '浜町商店街', image: 'images/hamamachi.png' },
+      { name: '思案橋', image: 'images/shianbashi.png' },
+      { name: '出島ワーフ', image: 'images/dejima_wharf.png' },
+      { name: '長崎歴史文化博物館', image: 'images/history_museum.png' },
+      { name: '長崎県美術館', image: 'images/art_museum.png' },
+      { name: 'ゆめタウン夢彩都', image: 'images/yumesaido.png' },
+      { name: 'アミュプラザ長崎', image: 'images/amu_plaza.png' },
+      { name: '浜屋百貨店', image: 'images/hamaya.png' },
+      { name: '水辺の森公園', image: 'images/mizube_park.png' },
+      { name: '諏訪神社', image: 'images/suwa_shrine.png' },
+      { name: '崇福寺', image: 'images/soufukuji.png' },
+      { name: '市役所', image: 'images/city_hall.png' },
+      { name: '県庁', image: 'images/pref_office.png' },
+      { name: '県庁跡地', image: 'images/old_pref_office.png' },
+      { name: '長崎港ターミナル', image: 'images/port_terminal.png' },
+      { name: '長崎県営バスターミナル', image: 'images/bus_terminal.png' },
+      { name: '長崎大学片淵キャンパス', image: 'images/nagasaki_univ.png' },
+      { name: '活水女子大学', image: 'images/kwassui.png' }
+    ];
+
+    const canvas = document.getElementById('canvas');
+    const unknownBox = document.getElementById('unknownBox');
+    const startTime = Date.now();
+
+    function renderSpotList() {
+      const spotList = document.getElementById('spotList');
+      spotList.innerHTML = '';
+
+      spots.forEach((spot) => {
+        const div = document.createElement('div');
+        div.className = 'spot-item';
+        div.dataset.name = spot.name;
+        div.onclick = () => addSpot(spot.image, spot.name);
+        div.innerHTML = `<img src="${spot.image}" alt="${spot.name}">`;
+        spotList.appendChild(div);
+      });
+
+      updateSpotListStatus();
+    }
+
+    function updateSpotListStatus() {
+      document.querySelectorAll('.spot-item').forEach(item => {
+        const name = item.dataset.name;
+        const isUsed = canvas.querySelector(`.placed-spot[data-name="${name}"]`) || unknownBox.querySelector(`.placed-spot[data-name="${name}"]`);
+        item.classList.toggle('used', Boolean(isUsed));
+      });
+    }
+
+    function getPlacementData() {
+      const canvasRect = canvas.getBoundingClientRect();
+
+      const canvasItems = Array.from(canvas.querySelectorAll('.placed-spot')).map((el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          name: el.dataset.name,
+          area: 'canvas',
+          x_px: Math.round(rect.left - canvasRect.left),
+          y_px: Math.round(rect.top - canvasRect.top),
+          x_ratio: Number(((rect.left - canvasRect.left) / canvas.clientWidth).toFixed(4)),
+          y_ratio: Number(((rect.top - canvasRect.top) / canvas.clientHeight).toFixed(4))
+        };
+      });
+
+      const unknownItems = Array.from(unknownBox.querySelectorAll('.placed-spot')).map((el, index) => {
+        return {
+          name: el.dataset.name,
+          area: 'unknown',
+          order: index,
+          x_px: null,
+          y_px: null,
+          x_ratio: null,
+          y_ratio: null
+        };
+      });
+
+      return [...canvasItems, ...unknownItems];
+    }
+
+    function splitString(text, chunkSize) {
+      const chunks = [];
+      for (let i = 0; i < text.length; i += chunkSize) {
+        chunks.push(text.slice(i, i + chunkSize));
+      }
+      return chunks;
+    }
+
+    window.saveAsImage = async function () {
+      const respondentId = document.getElementById('respondentId').value.trim();
+
+      if (!respondentId) {
+        alert('回答者IDを入力してください。');
+        document.getElementById('respondentId').focus();
+        return;
+      }
+
+      const saveButton = document.querySelector('.save-button');
+      saveButton.disabled = true;
+      saveButton.textContent = '保存中...';
+
+      try {
+        const captured = await html2canvas(document.querySelector('.right-area'), {
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          scale: 0.6
+        });
+
+        const imageData = captured.toDataURL('image/jpeg', 0.9);
+        const clientTimestamp = new Date().toISOString();
+        const elapsedSeconds = Math.round((Date.now() - startTime) / 1000);
+        const responseId = `response_${Date.now()}`;
+        const imageChunks = splitString(imageData, 700000);
+
+        const responseRef = doc(collection(db, 'responses'));
+
+        await setDoc(responseRef, {
+          responseId,
+          respondentId,
+          clientTimestamp,
+          serverTimestamp: serverTimestamp(),
+          elapsedSeconds,
+          imageChunkCount: imageChunks.length,
+          imageStorageMethod: 'firestore_chunks',
+          imageFormat: 'jpeg',
+          positionsCount: getPlacementData().length,
+          positions: getPlacementData()
+        });
+
+        for (let i = 0; i < imageChunks.length; i++) {
+          const chunkRef = doc(db, 'responses', responseRef.id, 'imageChunks', String(i).padStart(4, '0'));
+          await setDoc(chunkRef, {
+            index: i,
+            data: imageChunks[i]
+          });
+        }
+
+        alert('回答結果をFirestoreに保存しました。');
+      } catch (error) {
+        console.error(error);
+        alert(`保存に失敗しました。Firestoreの設定やルールを確認してください。\n\n${error.code || ''}\n${error.message || error}`);
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = '配置結果を保存';
+      }
+    };
+
+    function addSpot(image, name) {
+      const existing = canvas.querySelector(`.placed-spot[data-name="${name}"]`) || unknownBox.querySelector(`.placed-spot[data-name="${name}"]`);
+
+      if (existing) {
+        alert('同じスポットが複数配置されています！');
+        return;
+      }
+
+      const spot = document.createElement('div');
+      spot.className = 'placed-spot';
+      spot.dataset.name = name;
+
+      const position = findOpenPosition();
+
+      spot.style.left = `${position.x}px`;
+      spot.style.top = `${position.y}px`;
+      spot.innerHTML = `<img src="${image}" alt="${name}">`;
+
+      canvas.appendChild(spot);
+      makeDraggable(spot);
+      updateSpotListStatus();
+    }
+
+    function findOpenPosition() {
+      const itemWidth = 145;
+      const itemHeight = 120;
+      const margin = 12;
+      const canvasWidth = canvas.clientWidth;
+      const canvasHeight = canvas.clientHeight;
+
+      for (let y = 20; y < canvasHeight - itemHeight; y += itemHeight + margin) {
+        for (let x = 20; x < canvasWidth - itemWidth; x += itemWidth + margin) {
+          const overlaps = Array.from(canvas.querySelectorAll('.placed-spot')).some(el => {
+            const ex = parseFloat(el.style.left);
+            const ey = parseFloat(el.style.top);
+            return !(
+              x + itemWidth < ex ||
+              x > ex + itemWidth ||
+              y + itemHeight < ey ||
+              y > ey + itemHeight
+            );
+          });
+
+          if (!overlaps) return { x, y };
+        }
+      }
+
+      return { x: 20, y: 20 };
+    }
+
+    function makeDraggable(element) {
+      let isDragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      element.addEventListener('mousedown', (e) => {
+        isDragging = true;
+
+        const rect = element.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+
+        element.style.position = 'fixed';
+        element.style.zIndex = '9999';
+        element.style.left = `${rect.left}px`;
+        element.style.top = `${rect.top}px`;
+
+        document.body.appendChild(element);
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        element.style.left = `${e.clientX - offsetX}px`;
+        element.style.top = `${e.clientY - offsetY}px`;
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const elementRect = element.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        const unknownRect = unknownBox.getBoundingClientRect();
+
+        const inCanvas = !(
+          elementRect.right < canvasRect.left ||
+          elementRect.left > canvasRect.right ||
+          elementRect.bottom < canvasRect.top ||
+          elementRect.top > canvasRect.bottom
+        );
+
+        const inUnknown = !(
+          elementRect.right < unknownRect.left ||
+          elementRect.left > unknownRect.right ||
+          elementRect.bottom < unknownRect.top ||
+          elementRect.top > unknownRect.bottom
+        );
+
+        if (inUnknown) {
+          unknownBox.appendChild(element);
+          element.style.position = 'relative';
+          element.style.left = '0';
+          element.style.top = '0';
+          element.style.zIndex = '1';
+          updateSpotListStatus();
+          return;
+        }
+
+        if (inCanvas) {
+          canvas.appendChild(element);
+
+          const left = elementRect.left - canvasRect.left;
+          const top = elementRect.top - canvasRect.top;
+
+          element.style.position = 'absolute';
+          element.style.left = `${Math.max(0, Math.min(left, canvas.clientWidth - element.offsetWidth))}px`;
+          element.style.top = `${Math.max(0, Math.min(top, canvas.clientHeight - element.offsetHeight))}px`;
+          element.style.zIndex = '10';
+          updateSpotListStatus();
+          return;
+        }
+
+        element.remove();
+        updateSpotListStatus();
+      });
+    }
+
+    renderSpotList();
+  </script>
+</body>
+</html>
