@@ -47,8 +47,7 @@
       border-radius: 12px;
       cursor: pointer;
       background: #fafafa;
-      transition: background 0.2s, transform 0.2s, opacity 0.2s;
-      position: relative;
+      transition: background 0.2s, transform 0.2s;
     }
 
     .spot-item:hover {
@@ -60,6 +59,7 @@
       background: #dbeafe;
       border-color: #2563eb;
       opacity: 0.65;
+      position: relative;
     }
 
     .spot-item.used::after {
@@ -127,7 +127,7 @@
       cursor: move;
       user-select: none;
       z-index: 10;
-      width: 135px;
+      width: 70px;
     }
 
     .placed-spot img {
@@ -138,6 +138,32 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       background: white;
       pointer-events: none;
+    }
+
+    .respondent-box {
+      background: white;
+      padding: 16px 20px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .respondent-box input {
+      font-size: 18px;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      min-width: 220px;
+    }
+
+    .respondent-box p {
+      margin: 0;
+      color: #6b7280;
+      width: 100%;
     }
 
     .guide {
@@ -180,6 +206,12 @@
 <body>
   <h1>地点配置課題</h1>
 
+  <div class="respondent-box">
+    <label for="respondentId"><strong>回答者ID</strong></label>
+    <input id="respondentId" type="text" placeholder="例：A001" autocomplete="off">
+    <p>指定された回答者IDを入力してください。</p>
+  </div>
+
   <div class="guide">
     <h2>［実施内容］</h2>
     <ul>
@@ -187,9 +219,7 @@
       <li>左に並んでいるアイコンはスポットを示しています。クリックして枠の中にアイコンを表示させて，ドラッグして配置してください。</li>
       <li>時間内であれば，何度修正しても（配置し直しても）構いません。</li>
       <li>あなたが知らないスポットは，枠の下にある「わからないスポット」へ移動してください。</li>
-      <li>回答が終了したら，「配置結果を画像保存」を押し，画像ファイルを以下のフォームから送信してください。<br>
-        <a href="https://forms.gle/XYoNnnQnu2yQNomo7" target="_blank">https://forms.gle/XYoNnnQnu2yQNomo7</a>
-      </li>
+      <li>回答が終了したら，「配置結果を保存」を押してください。</li>
     </ul>
 
     <h2>［注意事項］</h2>
@@ -202,7 +232,7 @@
   </div>
 
   <div class="button-row">
-    <button class="save-button" onclick="saveAsImage()">配置結果を画像保存</button>
+    <button class="save-button" onclick="saveAsImage()">配置結果を保存</button>
     
   </div>
 
@@ -223,63 +253,24 @@
 
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
-  <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-    import { getStorage, ref, uploadString, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: 'YOUR_API_KEY',
-      authDomain: 'YOUR_PROJECT.firebaseapp.com',
-      projectId: 'YOUR_PROJECT_ID',
-      storageBucket: 'YOUR_PROJECT.appspot.com',
-      messagingSenderId: 'YOUR_SENDER_ID',
-      appId: 'YOUR_APP_ID'
+      apiKey: "AIzaSyAjsAkshBiTYBECWbKguZ197sk9YvrRWpM",
+      authDomain: "chitenhaichi.firebaseapp.com",
+      projectId: "chitenhaichi",
+      storageBucket: "chitenhaichi.firebasestorage.app",
+      messagingSenderId: "321429542044",
+      appId: "1:321429542044:web:b63ffb614cd29aa3dfc959",
+      measurementId: "G-883W373JTM"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
+    // Firestoreのみを使用します。PNGはimageBase64として保存されます。
 
-    window.saveAsImage = async function () {
-      const captured = await html2canvas(document.querySelector('.right-area'));
-
-      const imageData = captured.toDataURL('image/png');
-
-      const positions = [];
-
-      document.querySelectorAll('.placed-spot').forEach((el) => {
-        positions.push({
-          name: el.dataset.name,
-          x: el.style.left || null,
-          y: el.style.top || null,
-          area: el.parentElement.id === 'unknownBox' ? 'unknown' : 'canvas'
-        });
-      });
-
-      const timestamp = new Date().toISOString();
-
-      const filename = `response_${Date.now()}.png`;
-      const storageRef = ref(storage, `responses/${filename}`);
-
-      await uploadString(storageRef, imageData, 'data_url');
-
-      const imageUrl = await getDownloadURL(storageRef);
-
-      await addDoc(collection(db, 'responses'), {
-        timestamp,
-        imageUrl,
-        positions
-      });
-
-      alert('回答結果を保存しました。');
-    }
-  </script>
-
-  <script>
-
-  <script>
     const spots = [
       { name: '長崎駅', image: 'images/nagasaki_station.png' },
       { name: '新地中華街', image: 'images/shinchi_chinatown.png' },
@@ -310,6 +301,7 @@
 
     const canvas = document.getElementById('canvas');
     const unknownBox = document.getElementById('unknownBox');
+    const startTime = Date.now();
 
     function renderSpotList() {
       const spotList = document.getElementById('spotList');
@@ -330,21 +322,107 @@
     function updateSpotListStatus() {
       document.querySelectorAll('.spot-item').forEach(item => {
         const name = item.dataset.name;
-        const isUsed = document.querySelector(`.placed-spot[data-name="${name}"]`);
+        const isUsed = canvas.querySelector(`.placed-spot[data-name="${name}"]`) || unknownBox.querySelector(`.placed-spot[data-name="${name}"]`);
         item.classList.toggle('used', Boolean(isUsed));
       });
     }
 
-    function saveAsImage() {
-      html2canvas(document.querySelector('.right-area')).then((captured) => {
-        const link = document.createElement('a');
-        link.download = '地点配置課題.png';
-        link.href = captured.toDataURL();
-        link.click();
+    function getPlacementData() {
+      const canvasRect = canvas.getBoundingClientRect();
+
+      const canvasItems = Array.from(canvas.querySelectorAll('.placed-spot')).map((el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          name: el.dataset.name,
+          area: 'canvas',
+          x_px: Math.round(rect.left - canvasRect.left),
+          y_px: Math.round(rect.top - canvasRect.top),
+          x_ratio: Number(((rect.left - canvasRect.left) / canvas.clientWidth).toFixed(4)),
+          y_ratio: Number(((rect.top - canvasRect.top) / canvas.clientHeight).toFixed(4))
+        };
       });
+
+      const unknownItems = Array.from(unknownBox.querySelectorAll('.placed-spot')).map((el, index) => {
+        return {
+          name: el.dataset.name,
+          area: 'unknown',
+          order: index,
+          x_px: null,
+          y_px: null,
+          x_ratio: null,
+          y_ratio: null
+        };
+      });
+
+      return [...canvasItems, ...unknownItems];
     }
 
-    
+    function splitString(text, chunkSize) {
+      const chunks = [];
+      for (let i = 0; i < text.length; i += chunkSize) {
+        chunks.push(text.slice(i, i + chunkSize));
+      }
+      return chunks;
+    }
+
+    window.saveAsImage = async function () {
+      const respondentId = document.getElementById('respondentId').value.trim();
+
+      if (!respondentId) {
+        alert('回答者IDを入力してください。');
+        document.getElementById('respondentId').focus();
+        return;
+      }
+
+      const saveButton = document.querySelector('.save-button');
+      saveButton.disabled = true;
+      saveButton.textContent = '保存中...';
+
+      try {
+        const captured = await html2canvas(document.querySelector('.right-area'), {
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          scale: 0.6
+        });
+
+        const imageData = captured.toDataURL('image/jpeg', 0.9);
+        const clientTimestamp = new Date().toISOString();
+        const elapsedSeconds = Math.round((Date.now() - startTime) / 1000);
+        const responseId = `response_${Date.now()}`;
+        const imageChunks = splitString(imageData, 700000);
+
+        const responseRef = doc(collection(db, 'responses'));
+
+        await setDoc(responseRef, {
+          responseId,
+          respondentId,
+          clientTimestamp,
+          serverTimestamp: serverTimestamp(),
+          elapsedSeconds,
+          imageChunkCount: imageChunks.length,
+          imageStorageMethod: 'firestore_chunks',
+          imageFormat: 'jpeg',
+          positionsCount: getPlacementData().length,
+          positions: getPlacementData()
+        });
+
+        for (let i = 0; i < imageChunks.length; i++) {
+          const chunkRef = doc(db, 'responses', responseRef.id, 'imageChunks', String(i).padStart(4, '0'));
+          await setDoc(chunkRef, {
+            index: i,
+            data: imageChunks[i]
+          });
+        }
+
+        alert('回答結果をFirestoreに保存しました。');
+      } catch (error) {
+        console.error(error);
+        alert(`保存に失敗しました。Firestoreの設定やルールを確認してください。\n\n${error.code || ''}\n${error.message || error}`);
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = '配置結果を保存';
+      }
+    };
 
     function addSpot(image, name) {
       const existing = canvas.querySelector(`.placed-spot[data-name="${name}"]`) || unknownBox.querySelector(`.placed-spot[data-name="${name}"]`);
@@ -370,8 +448,8 @@
     }
 
     function findOpenPosition() {
-      const itemWidth = 145;
-      const itemHeight = 120;
+      const itemWidth = 80;
+      const itemHeight = 70;
       const margin = 12;
       const canvasWidth = canvas.clientWidth;
       const canvasHeight = canvas.clientHeight;
