@@ -166,6 +166,45 @@
       width: 100%;
     }
 
+
+    .feedback-box {
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      line-height: 1.8;
+    }
+
+    .feedback-box h2 {
+      margin-top: 0;
+      color: #1d4ed8;
+    }
+
+    .feedback-summary {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .feedback-list {
+      columns: 2;
+      column-gap: 28px;
+      padding-left: 20px;
+    }
+
+    .feedback-list li {
+      break-inside: avoid;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .feedback-list {
+        columns: 1;
+      }
+    }
+
     .guide {
       background:white;
       padding:20px;
@@ -236,6 +275,8 @@
     
   </div>
 
+  <div id="feedbackBox" class="feedback-box" style="display:none;"></div>
+
   <div class="container">
     <div class="sidebar">
       <h2>スポット一覧</h2>
@@ -302,6 +343,276 @@
     const canvas = document.getElementById('canvas');
     const unknownBox = document.getElementById('unknownBox');
     const startTime = Date.now();
+
+    const correctPositions = [
+      {
+            "name": "眼鏡橋",
+            "area": "canvas",
+            "y_px": 491,
+            "x_px": 657,
+            "y_ratio": 0.4112,
+            "x_ratio": 0.5503
+      },
+      {
+            "name": "思案橋",
+            "x_ratio": 0.5385,
+            "y_ratio": 0.6131,
+            "x_px": 643,
+            "y_px": 732,
+            "area": "canvas"
+      },
+      {
+            "y_px": 518,
+            "x_px": 282,
+            "y_ratio": 0.4338,
+            "x_ratio": 0.2362,
+            "area": "canvas",
+            "name": "長崎港ターミナル"
+      },
+      {
+            "name": "長崎歴史文化博物館",
+            "y_ratio": 0.2554,
+            "x_ratio": 0.5318,
+            "y_px": 305,
+            "x_px": 635,
+            "area": "canvas"
+      },
+      {
+            "y_px": 87,
+            "x_px": 946,
+            "y_ratio": 0.0729,
+            "x_ratio": 0.7923,
+            "area": "canvas",
+            "name": "長崎大学片淵キャンパス"
+      },
+      {
+            "name": "諏訪神社",
+            "y_px": 258,
+            "x_px": 735,
+            "y_ratio": 0.2161,
+            "x_ratio": 0.6156,
+            "area": "canvas"
+      },
+      {
+            "name": "長崎県営バスターミナル",
+            "area": "canvas",
+            "y_px": 248,
+            "x_px": 442,
+            "y_ratio": 0.2077,
+            "x_ratio": 0.3702
+      },
+      {
+            "name": "長崎駅",
+            "x_ratio": 0.2596,
+            "y_ratio": 0.2328,
+            "x_px": 310,
+            "y_px": 278,
+            "area": "canvas"
+      },
+      {
+            "area": "canvas",
+            "y_ratio": 0.2462,
+            "x_ratio": 0.3107,
+            "y_px": 294,
+            "x_px": 371,
+            "name": "アミュプラザ長崎"
+      },
+      {
+            "name": "県庁",
+            "y_ratio": 0.3224,
+            "x_ratio": 0.242,
+            "y_px": 385,
+            "x_px": 289,
+            "area": "canvas"
+      },
+      {
+            "area": "canvas",
+            "x_px": 324,
+            "y_px": 501,
+            "x_ratio": 0.2714,
+            "y_ratio": 0.4196,
+            "name": "ゆめタウン夢彩都"
+      },
+      {
+            "area": "canvas",
+            "y_ratio": 0.4958,
+            "x_ratio": 0.2898,
+            "y_px": 592,
+            "x_px": 346,
+            "name": "出島ワーフ"
+      },
+      {
+            "y_ratio": 0.5946,
+            "x_ratio": 0.2379,
+            "y_px": 710,
+            "x_px": 284,
+            "area": "canvas",
+            "name": "水辺の森公園"
+      },
+      {
+            "y_px": 665,
+            "x_px": 307,
+            "y_ratio": 0.557,
+            "x_ratio": 0.2571,
+            "area": "canvas",
+            "name": "長崎県美術館"
+      },
+      {
+            "name": "県庁跡地",
+            "x_ratio": 0.3576,
+            "y_ratio": 0.4816,
+            "x_px": 427,
+            "y_px": 575,
+            "area": "canvas"
+      },
+      {
+            "name": "出島",
+            "area": "canvas",
+            "y_ratio": 0.5184,
+            "x_ratio": 0.3534,
+            "y_px": 619,
+            "x_px": 422
+      },
+      {
+            "y_px": 708,
+            "x_px": 483,
+            "y_ratio": 0.593,
+            "x_ratio": 0.4045,
+            "area": "canvas",
+            "name": "新地中華街"
+      },
+      {
+            "name": "グラバー園",
+            "x_px": 276,
+            "y_px": 921,
+            "x_ratio": 0.2312,
+            "y_ratio": 0.7714,
+            "area": "canvas"
+      },
+      {
+            "name": "オランダ坂",
+            "area": "canvas",
+            "y_px": 822,
+            "x_px": 385,
+            "y_ratio": 0.6884,
+            "x_ratio": 0.3224
+      },
+      {
+            "y_px": 790,
+            "x_px": 407,
+            "y_ratio": 0.6616,
+            "x_ratio": 0.3409,
+            "area": "canvas",
+            "name": "活水女子大学"
+      },
+      {
+            "name": "孔子廟",
+            "y_ratio": 0.7546,
+            "x_ratio": 0.3141,
+            "y_px": 901,
+            "x_px": 375,
+            "area": "canvas"
+      },
+      {
+            "x_ratio": 0.6181,
+            "y_ratio": 0.5804,
+            "x_px": 738,
+            "y_px": 693,
+            "area": "canvas",
+            "name": "崇福寺"
+      },
+      {
+            "y_ratio": 0.5285,
+            "x_ratio": 0.4992,
+            "y_px": 631,
+            "x_px": 596,
+            "area": "canvas",
+            "name": "浜屋百貨店"
+      },
+      {
+            "name": "浜町商店街",
+            "area": "canvas",
+            "x_px": 584,
+            "y_px": 601,
+            "x_ratio": 0.4891,
+            "y_ratio": 0.5034
+      },
+      {
+            "name": "市役所",
+            "area": "canvas",
+            "x_px": 622,
+            "y_px": 429,
+            "x_ratio": 0.5209,
+            "y_ratio": 0.3593
+      }
+];
+
+    // 地図画像上のスケールバーから算出：
+    // 500m ≒ 173px，地図画像幅 1254px
+    const METERS_PER_RATIO = 500 / (173 / 1254);
+
+    function getGrade(distanceMeters) {
+      if (distanceMeters <= 50) return '◎';
+      if (distanceMeters <= 250) return '○';
+      if (distanceMeters <= 500) return '△';
+      return '×';
+    }
+
+    function evaluatePlacements(positions) {
+      const answerMap = new Map();
+      positions.forEach((p) => {
+        if (p.area === 'canvas' && p.x_ratio !== null && p.y_ratio !== null) {
+          answerMap.set(p.name, p);
+        }
+      });
+
+      return correctPositions.map((correct) => {
+        const answer = answerMap.get(correct.name);
+
+        if (!answer) {
+          return {
+            name: correct.name,
+            grade: '未配置',
+            distanceMeters: null,
+            isCircleOrBetter: false
+          };
+        }
+
+        const dx = answer.x_ratio - correct.x_ratio;
+        const dy = answer.y_ratio - correct.y_ratio;
+        const distanceMeters = Math.round(Math.sqrt(dx * dx + dy * dy) * METERS_PER_RATIO);
+        const grade = getGrade(distanceMeters);
+
+        return {
+          name: correct.name,
+          grade,
+          distanceMeters,
+          isCircleOrBetter: grade === '◎' || grade === '○'
+        };
+      });
+    }
+
+    function showFeedback(evaluationResults) {
+      const okOrBetter = evaluationResults.filter(r => r.isCircleOrBetter).length;
+      const total = evaluationResults.length;
+
+      const rows = evaluationResults.map((r) => {
+        if (r.distanceMeters === null) {
+          return `<li>${r.name}：未配置</li>`;
+        }
+        return `<li>${r.name}：${r.grade}（${r.distanceMeters}m）</li>`;
+      }).join('');
+
+      const box = document.getElementById('feedbackBox');
+      box.innerHTML = `
+        <h2>判定結果</h2>
+        <div class="feedback-summary">総合評価：${okOrBetter}/${total}地点が○以上</div>
+        <ul class="feedback-list">${rows}</ul>
+      `;
+      box.style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
 
     function renderSpotList() {
       const spotList = document.getElementById('spotList');
@@ -390,6 +701,8 @@
         const elapsedSeconds = Math.round((Date.now() - startTime) / 1000);
         const responseId = `response_${Date.now()}`;
         const imageChunks = splitString(imageData, 700000);
+        const placementData = getPlacementData();
+        const evaluationResults = evaluatePlacements(placementData);
 
         const responseRef = doc(collection(db, 'responses'));
 
@@ -402,8 +715,13 @@
           imageChunkCount: imageChunks.length,
           imageStorageMethod: 'firestore_chunks',
           imageFormat: 'jpeg',
-          positionsCount: getPlacementData().length,
-          positions: getPlacementData()
+          positionsCount: placementData.length,
+          positions: placementData,
+          evaluationResults,
+          evaluationSummary: {
+            circleOrBetter: evaluationResults.filter(r => r.isCircleOrBetter).length,
+            total: evaluationResults.length
+          }
         });
 
         for (let i = 0; i < imageChunks.length; i++) {
@@ -414,7 +732,8 @@
           });
         }
 
-        alert('回答結果をFirestoreに保存しました。');
+        showFeedback(evaluationResults);
+        alert('回答結果を保存しました。判定結果を画面に表示しました。');
       } catch (error) {
         console.error(error);
         alert(`保存に失敗しました。Firestoreの設定やルールを確認してください。\n\n${error.code || ''}\n${error.message || error}`);
